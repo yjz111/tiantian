@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^tinymce/', include('tinymce.urls')),
     url(r'^cart/',include('df_cart.urls')),
     url(r'^order/',include('df_order.urls')),
+    url(r'^payment/',include('df_payment.urls')),
     url(r'^search/', include('haystack.urls')),     #全文检索
 
 ]

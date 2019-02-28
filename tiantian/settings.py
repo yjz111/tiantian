@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'df_goods',
     'df_cart',
     'df_order',
+    'df_payment',
 
 )
 
@@ -142,3 +143,9 @@ HAYSTACK_CONNECTIONS = {
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 #
 HAYSTACK_SEARCH_RESULTS_PER_PAGE = 18  # 指定搜索结果每页显示多少条信息
+
+
+#支付宝
+ALIPAY_APPID = '2016091700533918'#开发者应用appid
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'#支付宝网关地址
+ALIPAY_DEBUG = True #是否使用沙箱环境

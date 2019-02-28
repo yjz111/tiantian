@@ -1,5 +1,8 @@
+import os
 from  datetime import  datetime
 from decimal import Decimal
+
+from alipay import AliPay
 from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from df_cart.models import CartInfo
@@ -8,6 +11,9 @@ from df_order.models import OrderDetailInfo, OrderInfo
 from  df_user import  user_decorator
 from df_user.models import UserInfo
 from django.db import  transaction
+from django.http import HttpResponse
+from tiantian import settings
+
 
 @user_decorator.login
 def order(request):
@@ -100,7 +106,6 @@ def order_handle(request):
     return JsonResponse({'status': 1})
 
 
-# @transaction.atomic()
 def pay(request,oid):
     tran_id = transaction.savepoint()
     # try:
@@ -108,8 +113,29 @@ def pay(request,oid):
     order.zhifu = 1
 
     order.save()
-    # except Exception as e:
-    # print '==================%s' % e
-    # transaction.savepoint_rollback(tran_id)
-    context = {'oid': oid}
-    return render(request, 'df_order/pay.html', context)
+    alipay = AliPay(
+        appid=settings.ALIPAY_APPID,  # 开发者应用APPID
+        app_notify_url=None,  # 默认回调url
+        app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          "keys/app_private_key.pem"),
+        alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                            "keys/alipay_public_key.pem"),  # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+        sign_type="RSA2",  # RSA 或者 RSA2
+        debug=settings.ALIPAY_DEBUG  # 默认False，是否使用的是沙箱环境
+    )
+
+    # 组织支付参数
+    # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
+    order_string = alipay.api_alipay_trade_page_pay(
+        out_trade_no=oid,  # 商户订单号
+        # total_amount=str(OrderInfo.ototal),  # 支付总金额 Decimal
+        total_amount=str(100),  # 支付总金额 Decimal
+        subject='天天%s' % oid,
+        return_url="http://127.0.0.1:8000/user/user_center_order&1",  # 用户支付成功之后回调地址
+        notify_url=None  # 可选, 不填则使用默认notify url
+    )
+
+    # 3. 返回支付宝支付地址
+    pay_url = settings.ALIPAY_URL + '?' + order_string
+    return redirect(pay_url)
+
